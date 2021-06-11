@@ -87,12 +87,12 @@ module Jidoka
       @result = @caller.instance_eval(&block)
     end
 
-    def _down
-      @caller.instance_exec(@result, &@down) if @down.present?
-    end
-
     def down(&block)
       @down = block
+    end
+
+    def undo
+      @caller.instance_exec(@result, &@down) if @down.present?
     end
 
     def send_notification
@@ -116,7 +116,7 @@ module Jidoka
     # NOTE: Do not overwrite this method! The `down` for supervisors is just calling down on each step
     def rollback
       @steps.reverse_each do |step|
-        step._down
+        step.undo
 
         # We shouldn't raise errors in rollbacks. Definitely want to catch any of these issues
       rescue StandardError => e
@@ -152,7 +152,7 @@ module Jidoka
 
     def worker_step(klass, opts = {})
       step do
-        up { klass.run!(opts.merge(notify: false)) }
+        up { klass.run!(opts.merge(notify: false)) } # NOTE: notify is false since it is always deferred
         down(&:down)
         send_notification(&:send_notification)
       end
