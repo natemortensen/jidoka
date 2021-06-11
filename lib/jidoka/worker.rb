@@ -70,7 +70,7 @@ module Jidoka
     end
 
     def self.run(opts = {})
-      steps = opts.delete(:notify) ? %i[validate run] : %i[validate! run! send_notification]
+      steps = opts.delete(:notify) ? %i[validate run] : %i[validate run send_notification]
       initialize_and_call!(opts, *steps).tap do |result|
         yield(result) if block_given?
       end
@@ -97,7 +97,6 @@ module Jidoka
     def prepare(opts); end
 
     def initialize(args = nil)
-      # super
       @opts = args
     end
 

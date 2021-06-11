@@ -5,8 +5,11 @@ class TestWorker < Jidoka::Worker
     array_larger_than_two: 'Array has more than 2 elements'
   )
 
-  def up(arr:, notifications:)
+  def prepare(arr:, **_opts)
     @arr = arr
+  end
+
+  def up(arr:, notifications:)
     @arr << 'Code has executed.'
   end
 
@@ -18,7 +21,7 @@ class TestWorker < Jidoka::Worker
     condition!(:array_larger_than_two) { opts[:arr].size < 2 }
   end
 
-  def _notify(opts)
+  def notify(opts)
     opts[:notifications] << 'Hey you! Something happened.'
   end
 end
@@ -50,8 +53,8 @@ RSpec.describe TestWorker do
     context 'with invalid args' do
       let(:arr) { %i[one two] }
 
-      it { expect { subject }.not_to change(arr, :size) }
-      it { expect { subject }.not_to change(notifications, :size) }
+      it { expect { subject rescue nil }.not_to change(arr, :size) }
+      it { expect { subject rescue nil }.not_to change(notifications, :size) }
       it { expect { subject }.to raise_error(Jidoka::ConditionNotMet) }
     end
   end
@@ -72,10 +75,9 @@ RSpec.describe TestWorker do
     context 'with invalid args' do
       let(:arr) { %i[one two] }
 
-
       it { expect { subject }.not_to change(arr, :size) }
       it { expect { subject }.not_to change(notifications, :size) }
-      it { expect { subject }.to raise_error(Jidoka::ConditionNotMet) }
+      it { expect { subject }.not_to raise_error(Jidoka::ConditionNotMet) }
 
       it do
         is_expected.to be_failure.and have_attributes(
@@ -102,8 +104,8 @@ RSpec.describe TestWorker do
     context 'with invalid args' do
       let(:arr) { %i[one two] }
 
-      it { expect { subject }.not_to change(arr, :size) }
-      it { expect { subject }.not_to change(notifications, :size) }
+      it { expect { subject rescue nil }.not_to change(arr, :size) }
+      it { expect { subject rescue nil }.not_to change(notifications, :size) }
       it { expect { subject }.to raise_error(Jidoka::ConditionNotMet) }
     end
   end
