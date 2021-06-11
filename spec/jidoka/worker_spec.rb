@@ -81,7 +81,7 @@ RSpec.describe TestWorker do
 
       it do
         is_expected.to be_failure.and have_attributes(
-          arr: nil,
+          arr: %i[one two],
           message: 'Array has more than 2 elements'
         )
       end
@@ -96,7 +96,7 @@ RSpec.describe TestWorker do
     it { expect { subject }.not_to change(notifications, :size) }
     it do
       is_expected.to be_success.and have_attributes(
-        arr: nil,
+        arr: %i[one],
         message: nil
       )
     end
@@ -120,7 +120,7 @@ RSpec.describe TestWorker do
     it { is_expected.to be_success }
     it do
       is_expected.to have_attributes(
-        arr: nil,
+        arr: %i[one],
         message: nil
       )
     end
@@ -136,7 +136,7 @@ RSpec.describe TestWorker do
       it { is_expected.to be_failure }
       it do
         is_expected.to have_attributes(
-          arr: nil,
+          arr: %i[one two],
           message: 'Array has more than 2 elements'
         )
       end
