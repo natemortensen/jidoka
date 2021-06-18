@@ -16,12 +16,12 @@ module Jidoka
     include Notifiable
 
     def self.run!(opts = {})
-      steps = opts.delete(:notify) ? %i[validate! run!] : %i[validate! run! send_notification]
+      steps = opts.delete(:notify) == false ? %i[validate! run!] : %i[validate! run! send_notification]
       initialize_and_call!(opts, *steps)
     end
 
     def self.run(opts = {})
-      steps = opts.delete(:notify) ? %i[validate run] : %i[validate run send_notification]
+      steps = opts.delete(:notify) == false ? %i[validate run] : %i[validate run send_notification]
       initialize_and_call!(opts, *steps).tap do |result|
         yield(result) if block_given?
       end
@@ -92,11 +92,11 @@ module Jidoka
     end
 
     def undo
-      @caller.instance_exec(@result, &@down) if @down.present?
+      @caller.instance_exec(@result, &@down) if @down
     end
 
     def send_notification
-      @caller.instance_exec(@result, &@notify) if @notify.present?
+      @caller.instance_exec(@result, &@notify) if @notify
     end
 
     def notify(&block)
@@ -107,7 +107,7 @@ module Jidoka
   ##
   # This class executes steps in a specified sequence given some inputs.
   # If a failure is encountered, previous steps will be rolled back automatically
-  class Supervisor
+  class Supervisor < Worker
     def initialize(*args)
       super(*args)
       @steps = []
@@ -118,9 +118,9 @@ module Jidoka
       @steps.reverse_each do |step|
         step.undo
 
-        # We shouldn't raise errors in rollbacks. Definitely want to catch any of these issues
+      # We shouldn't raise errors in rollbacks. Definitely want to catch any of these issues
       rescue StandardError => e
-        capture_exception(e)
+        capture_error(e)
       end
     end
 
@@ -136,9 +136,9 @@ module Jidoka
       @steps.each(&:send_notification)
       notify(@opts)
 
-      # These are just notifications so they can silently fail but still report error
+    # These are just notifications so they can silently fail but still report error
     rescue StandardError => e
-      capture_exception(e)
+      capture_error(e)
     end
 
     protected
@@ -154,7 +154,7 @@ module Jidoka
       step do
         up { klass.run!(opts.merge(notify: false)) } # NOTE: notify is false since it is always deferred
         down(&:down)
-        send_notification(&:send_notification)
+        notify(&:send_notification)
       end
     end
 

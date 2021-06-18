@@ -1,32 +1,4 @@
-class TestWorker < Jidoka::Worker
-  attr_reader :arr
-
-  set_errors(
-    array_larger_than_two: 'Array has more than 2 elements'
-  )
-
-  def prepare(arr:, **_opts)
-    @arr = arr
-  end
-
-  def up(arr:, notifications:)
-    @arr << 'Code has executed.'
-  end
-
-  def down
-    @arr.pop
-  end
-
-  def validate_conditions!(opts)
-    condition!(:array_larger_than_two) { opts[:arr].size < 2 }
-  end
-
-  def notify(opts)
-    opts[:notifications] << 'Hey you! Something happened.'
-  end
-end
-
-RSpec.describe TestWorker do
+RSpec.describe MockClasses::TestWorker do
   let!(:arr) { %i[one] }
   let!(:notifications) { [] }
 
@@ -82,7 +54,7 @@ RSpec.describe TestWorker do
       it do
         is_expected.to be_failure.and have_attributes(
           arr: %i[one two],
-          message: 'Array has more than 2 elements'
+          message: 'Array cannot have multiple elements'
         )
       end
     end
@@ -137,7 +109,7 @@ RSpec.describe TestWorker do
       it do
         is_expected.to have_attributes(
           arr: %i[one two],
-          message: 'Array has more than 2 elements'
+          message: 'Array cannot have multiple elements'
         )
       end
     end

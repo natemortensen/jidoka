@@ -31,7 +31,7 @@ module Jidoka
   end
 
   ##
-  # Raised manually via `validate_conditions!` to pass directly to end user
+  # Raised manually via `validate` to pass directly to end user
   class ConditionNotMet < Failure; end
 
   ##

@@ -12,7 +12,7 @@ module Jidoka
       def validate!
         validate_arguments!(@opts)
         prepare(@opts)
-        validate_conditions!(@opts)
+        audit(@opts)
       rescue ConditionNotMet, ArgumentClassMismatch, Failure => e
         notice_failure(e)
         raise(e)
@@ -50,13 +50,20 @@ module Jidoka
         yield(self) if success?
       end
 
-      def validate_conditions!(**_opts); end
+      def audit(**_opts); end
 
       ##
       # Raises `ConditionNotMet` with specified error message if block does not return a truthy value.
-      # Intended for use with `validate_conditions!`
-      def condition!(key, message: nil)
-        raise_condition!(key, message: message) unless yield
+      # Intended for use with `audit`
+      def valid_if(error_key, message: nil)
+        raise_condition!(error_key, message: message) unless yield
+      end
+
+      ##
+      # Raises `ConditionNotMet` with specified error message if block does not return a falsey value.
+      # Intended for use with `audit`
+      def valid_unless(error_key, message: nil)
+        raise_condition!(error_key, message: message) if yield
       end
 
       def raise_condition!(key, message: nil)
