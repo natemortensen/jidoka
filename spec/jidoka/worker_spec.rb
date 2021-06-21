@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 RSpec.describe MockClasses::TestWorker do
   let!(:arr) { %i[one] }
   let!(:notifications) { [] }
@@ -25,8 +27,20 @@ RSpec.describe MockClasses::TestWorker do
     context 'with invalid args' do
       let(:arr) { %i[one two] }
 
-      it { expect { subject rescue nil }.not_to change(arr, :size) }
-      it { expect { subject rescue nil }.not_to change(notifications, :size) }
+      it {
+        expect do
+          subject
+        rescue StandardError
+          nil
+        end .not_to change(arr, :size)
+      }
+      it {
+        expect do
+          subject
+        rescue StandardError
+          nil
+        end .not_to change(notifications, :size)
+      }
       it { expect { subject }.to raise_error(Jidoka::ConditionNotMet) }
     end
   end
@@ -76,8 +90,20 @@ RSpec.describe MockClasses::TestWorker do
     context 'with invalid args' do
       let(:arr) { %i[one two] }
 
-      it { expect { subject rescue nil }.not_to change(arr, :size) }
-      it { expect { subject rescue nil }.not_to change(notifications, :size) }
+      it {
+        expect do
+          subject
+        rescue StandardError
+          nil
+        end .not_to change(arr, :size)
+      }
+      it {
+        expect do
+          subject
+        rescue StandardError
+          nil
+        end .not_to change(notifications, :size)
+      }
       it { expect { subject }.to raise_error(Jidoka::ConditionNotMet) }
     end
   end
@@ -99,7 +125,6 @@ RSpec.describe MockClasses::TestWorker do
 
     context 'with invalid args' do
       let(:arr) { %i[one two] }
-
 
       it { expect { subject }.not_to change(arr, :size) }
       it { expect { subject }.not_to change(notifications, :size) }

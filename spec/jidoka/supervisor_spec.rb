@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 RSpec.describe MockClasses::TestSupervisor do
   let(:flags) { {} }
   let!(:input_array) { [] }
@@ -25,7 +27,7 @@ RSpec.describe MockClasses::TestSupervisor do
   end
 
   context 'with a conditional flag' do
-    let(:flags) { {run_twice: false} }
+    let(:flags) { { run_twice: false } }
 
     it { is_expected.to be_success }
     it { is_expected.not_to be_failure }
@@ -39,7 +41,7 @@ RSpec.describe MockClasses::TestSupervisor do
   end
 
   context 'when one of the steps fails' do
-    let(:flags) { {raise_error: true} }
+    let(:flags) { { raise_error: true } }
 
     it { is_expected.not_to be_success }
     it { is_expected.to be_failure }
@@ -67,7 +69,7 @@ RSpec.describe MockClasses::TestSupervisor do
     it { expect(subject && notification_queue).to match(array_including('Hey you! Something happened.')) }
 
     context 'when a failure happens after the step' do
-      let(:flags) { {raise_inline_error: true} }
+      let(:flags) { { raise_inline_error: true } }
 
       it { expect(subject.inline_step).to match(status: :rolled_back) }
       it { is_expected.not_to be_success }

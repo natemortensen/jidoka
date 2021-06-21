@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'jidoka'
 
 module MockClasses
@@ -38,13 +40,15 @@ module MockClasses
     )
 
     def orchestrate(arr:, notifications:, run_twice: true, raise_error: false, raise_inline_error: false)
-      args = {arr: arr, notifications: notifications}
+      args = { arr: arr, notifications: notifications }
       worker_step(TestWorker, args)
-      worker_step(TestWorker, args) if run_twice || raise_error # Test conditionals
+      if run_twice || raise_error
+        worker_step(TestWorker, args)
+      end # Test conditionals
       worker_step(TestWorker, args) if raise_error # Test rollback
 
       step do
-        up { @inline_step = {status: :ran} }
+        up { @inline_step = { status: :ran } }
 
         # We're the result in as a block argument intentionally to test that functionality
         down { |r| r[:status] = :rolled_back }
@@ -59,7 +63,7 @@ module MockClasses
     protected
 
     def audit(arr:, **_opts)
-      valid_if(:array_not_blank) { arr.size == 0 }
+      valid_if(:array_not_blank) { arr.empty? }
     end
   end
 end

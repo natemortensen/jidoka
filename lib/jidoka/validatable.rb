@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Jidoka
   module Validatable
     extend ActiveSupport::Concern
@@ -86,8 +88,8 @@ module Jidoka
 
         self.class.argument_types.each do |key, klass|
           case args[key]
-            when *Array(klass).map(&:constantize) then nil # Object is okay
-            else raise ArgumentClassMismatch.new(key, expected: klass, actual: args[key]&.class&.to_s)
+          when *Array(klass).map(&:constantize) then nil # Object is okay
+          else raise ArgumentClassMismatch.new(key, expected: klass, actual: args[key]&.class&.to_s)
           end
         end
       end
@@ -99,11 +101,11 @@ module Jidoka
       end
 
       def set_errors(obj)
-        self.errors = (self.errors || {}).merge(obj)
+        self.errors = (errors || {}).merge(obj)
       end
 
       def possible_errors(with_prefix = false)
-        @possible_errors ||= self.errors || {}
+        @possible_errors ||= errors || {}
         with_prefix ? @possible_errors.transform_keys { |k| [to_s.underscore, k].join('-') } : @possible_errors
       end
     end

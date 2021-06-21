@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'active_support/core_ext/class/attribute.rb'
 require 'active_support/core_ext/hash/keys.rb'
 require 'active_support/concern.rb'

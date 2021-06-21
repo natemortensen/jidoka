@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Jidoka
   ##
   # Raised when an argument's class does not match the class defined in `argument_types`
