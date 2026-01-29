@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 module Jidoka
-  ##
-  # Raised when an argument's class does not match the class defined in `argument_types`
+  # Raised when rollback (down) fails
+  class IrreversibleAction < StandardError; end
+
+  # Raised when enforce_arguments! validation fails
   class ArgumentClassMismatch < StandardError
     attr_reader :param, :expected, :actual
 
@@ -10,33 +12,28 @@ module Jidoka
       @param = argument
       @expected = expected
       @actual = actual
-    end
-
-    def message
-      if actual.nil?
-        "#{param} was not provided"
-      else
-        "#{param} was expected to be a(n) #{@expected} but was a(n) #{@actual}"
-      end
+      super("#{param} was expected to be a(n) #{@expected} but was a(n) #{@actual || 'nil'}")
     end
   end
 
-  ##
-  # Raised manually if some error occurs during execution
-  class Failure < StandardError
-    attr_reader :message, :code
+  # Raised when business logic conditions are not met (Validation phase)
+  class ConditionNotMet < StandardError
+    attr_reader :code
 
     def initialize(code:, message:)
-      @message = message
       @code = code
+      super(message)
     end
   end
 
-  ##
-  # Raised manually via `validate` to pass directly to end user
-  class ConditionNotMet < Failure; end
+  # Raised when execution fails for a known reason (Execution phase)
+  class Failure < StandardError
+    attr_reader :code, :context
 
-  ##
-  # Raised when we can't rollback changes (to notify devs)
-  class IrreversibleAction < StandardError; end
+    def initialize(code:, message:, context: {})
+      @code = code
+      @context = context
+      super(message)
+    end
+  end
 end

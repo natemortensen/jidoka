@@ -22,7 +22,26 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+Add an initializer to configure Jidoka:
+
+```ruby
+# config/initializers/jidoka.rb
+Jidoka.configure do |config|
+  # Inherit from your app's base job to get queues, retries, etc.
+  config.parent_job_class = "ApplicationJob" 
+  
+  # Hook into your error reporting tool
+  config.error_handler = ->(e, context) {
+    if defined?(Sentry)
+      Sentry.set_context('jidoka', context)
+      Sentry.capture_exception(e)
+      Sentry::Context.clear!
+    else
+      Rails.logger.error("Jidoka Error: #{e.message} Context: #{context}")
+    end
+  }
+end
+```
 
 ## Development
 
