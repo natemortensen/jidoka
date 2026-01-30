@@ -5,8 +5,6 @@ require "active_job"
 require "active_record"
 require "jidoka/version"
 require "jidoka/errors"
-require "jidoka/worker"
-require "jidoka/supervisor"
 
 module Jidoka
   class Error < StandardError; end
@@ -39,3 +37,6 @@ module Jidoka
     end
   end
 end
+
+require "jidoka/worker"
+require "jidoka/supervisor"

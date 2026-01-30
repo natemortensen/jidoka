@@ -1,7 +1,7 @@
-require_relative "orchestrator/step"
+require_relative "supervisor/step"
 
 module Jidoka
-  class Orchestrator < Commander
+  class Supervisor < Commander
     def initialize(*args)
       super(*args)
       @steps = []
@@ -87,7 +87,7 @@ module Jidoka
     end
 
     # Abstract method to be implemented by subclass
-    def supervise(**_opts)
+    def orchestrate(**_opts)
       raise NotImplementedError
     end
   end

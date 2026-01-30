@@ -3,7 +3,7 @@
 require 'jidoka'
 
 module MockClasses
-  class TestWorker < Jidoka::Worker
+  class TestWorker < Jidoka::Commander
     attr_reader :arr
 
     ERRORS = {
@@ -39,7 +39,7 @@ module MockClasses
       custom_failure: 'Inline error raised'
     }.freeze
 
-    def supervise(arr:, notifications:, run_twice: true, raise_error: false, raise_inline_error: false)
+    def orchestrate(arr:, notifications:, run_twice: true, raise_error: false, raise_inline_error: false)
       args = { arr: arr, notifications: notifications }
       worker_step!(TestWorker, args)
       if run_twice || raise_error

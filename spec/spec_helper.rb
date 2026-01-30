@@ -4,6 +4,12 @@ require 'bundler/setup'
 require 'pry'
 require 'jidoka'
 
+# Set up in-memory database for testing
+ActiveRecord::Base.establish_connection(
+  adapter: 'sqlite3',
+  database: ':memory:'
+)
+
 require './spec/mock_classes.rb'
 
 RSpec.configure do |config|

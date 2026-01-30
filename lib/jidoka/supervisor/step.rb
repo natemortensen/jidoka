@@ -1,5 +1,5 @@
 module Jidoka
-  class Supervisor < Worker
+  class Supervisor < Commander
     class Step
       attr_reader :result
 
