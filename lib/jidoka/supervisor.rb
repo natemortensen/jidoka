@@ -44,6 +44,7 @@ module Jidoka
 
     def step!(&block)
       step = Step.new(self)
+      @steps << step
       begin
         step.instance_eval(&block)
       rescue StandardError => e
@@ -51,7 +52,6 @@ module Jidoka
         raise(e)
       end
 
-      @steps << step
       step.result
     end
 

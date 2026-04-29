@@ -131,3 +131,23 @@ RSpec.describe MockClasses::WorkerStepOverrideSupervisor do
     end
   end
 end
+
+RSpec.describe 'forward-recovery via down registered before up' do
+  let(:supervisor_class) do
+    Class.new(Jidoka::Supervisor) do
+      def orchestrate(recovery_log:, **_opts)
+        step! do
+          down { recovery_log << :recovered }
+          up { raise 'up failed mid-flight' }
+        end
+      end
+    end
+  end
+
+  it 'invokes down when up raises, allowing forward-recovery' do
+    log = []
+    result = supervisor_class.run(recovery_log: log)
+    expect(result).to be_failure
+    expect(log).to eq([:recovered])
+  end
+end
