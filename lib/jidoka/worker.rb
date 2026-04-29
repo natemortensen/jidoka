@@ -37,16 +37,6 @@ module Jidoka
       end
     end
 
-    def self.run_without_transaction!(opts = {})
-      initialize_and_call!(opts, :validate!, :run_without_transaction!, *include_notify?(opts))
-    end
-
-    def self.run_without_transaction(opts = {})
-      initialize_and_call!(opts, :validate, :run_without_transaction, *include_notify?(opts)).tap do |result|
-        yield(result) if block_given?
-      end
-    end
-
     def self.dry_run!(opts = {})
       initialize_and_call!(opts, :validate!)
     end
@@ -112,7 +102,7 @@ module Jidoka
     end
 
     def run!
-      ActiveRecord::Base.transaction { up(**@opts) }
+      with_transaction { up(**@opts) }
     rescue Jidoka::ConditionNotMet, Jidoka::Failure => e
       notice_failure!(e)
       raise(e)
@@ -124,26 +114,9 @@ module Jidoka
       notice_failure!(e)
     end
 
-    # Runs `up` without wrapping it in an ActiveRecord transaction.
-    # Use when the work spans non-transactional resources (external APIs,
-    # background jobs, long-running processes) where holding a DB transaction
-    # would be inappropriate.
-    def run_without_transaction!
-      up(**@opts)
-    rescue Jidoka::ConditionNotMet, Jidoka::Failure => e
-      notice_failure!(e)
-      raise(e)
-    end
-
-    def run_without_transaction
-      run_without_transaction!
-    rescue StandardError => e
-      notice_failure!(e)
-    end
-
     def undo!
       prepare_inverse(**@opts) if respond_to?(:prepare_inverse)
-      ActiveRecord::Base.transaction { down }
+      with_transaction { down }
     rescue Jidoka::ConditionNotMet, Jidoka::Failure => e
       notice_failure!(e)
       raise(e)
@@ -153,6 +126,22 @@ module Jidoka
       undo!
     rescue StandardError => e
       notice_failure!(e)
+    end
+
+    # Wraps `up` (and `down`) in an ActiveRecord transaction. Override in a
+    # subclass to opt out — for example, when the work crosses non-transactional
+    # boundaries (external APIs, long-running processes) and holding a DB
+    # transaction open would be inappropriate:
+    #
+    #   class SyncSubscriber < Jidoka::Worker
+    #     def with_transaction
+    #       yield
+    #     end
+    #
+    #     def up(...); end
+    #   end
+    def with_transaction(&block)
+      ActiveRecord::Base.transaction(&block)
     end
 
     def up(_opts = nil)

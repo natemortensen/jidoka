@@ -108,41 +108,23 @@ RSpec.describe MockClasses::TestWorker do
     end
   end
 
-  describe 'run_without_transaction!' do
-    subject { described_class.run_without_transaction!(args) }
-
-    it 'does not open an ActiveRecord transaction' do
-      expect(ActiveRecord::Base).not_to receive(:transaction)
-      subject
+  describe 'transaction wrapping' do
+    it 'wraps up in an ActiveRecord transaction by default' do
+      expect(ActiveRecord::Base).to receive(:transaction).and_call_original
+      described_class.run!(args)
     end
 
-    it { is_expected.to be_an_instance_of(described_class) }
-    it { expect { subject }.to change(arr, :size).by(1) }
-    it { expect { subject }.to change(notifications, :size).by(1) }
+    context 'when a subclass overrides with_transaction to skip it' do
+      subject { MockClasses::TestWorkerWithoutTransaction.run!(args) }
 
-    context 'with invalid args' do
-      let(:arr) { %i[one two] }
+      it 'does not open a transaction' do
+        expect(ActiveRecord::Base).not_to receive(:transaction)
+        subject
+      end
 
-      it { expect { subject }.to raise_error(Jidoka::ConditionNotMet) }
-    end
-  end
-
-  describe 'run_without_transaction' do
-    subject { described_class.run_without_transaction(args) }
-
-    it 'does not open an ActiveRecord transaction' do
-      expect(ActiveRecord::Base).not_to receive(:transaction)
-      subject
-    end
-
-    it { is_expected.to be_an_instance_of(described_class) }
-    it { expect { subject }.to change(arr, :size).by(1) }
-
-    context 'with invalid args' do
-      let(:arr) { %i[one two] }
-
-      it { expect { subject }.not_to raise_error }
-      it { is_expected.to be_failure }
+      it { is_expected.to be_an_instance_of(MockClasses::TestWorkerWithoutTransaction) }
+      it { expect { subject }.to change(arr, :size).by(1) }
+      it { expect { subject }.to change(notifications, :size).by(1) }
     end
   end
 

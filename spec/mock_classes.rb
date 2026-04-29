@@ -31,6 +31,13 @@ module MockClasses
     end
   end
 
+  class TestWorkerWithoutTransaction < TestWorker
+    # Override the transaction wrapper to run `up` directly.
+    def with_transaction
+      yield
+    end
+  end
+
   class TestSupervisor < Jidoka::Supervisor
     attr_reader :result, :inline_step
 
