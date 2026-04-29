@@ -75,9 +75,10 @@ module MockClasses
   end
 
   class WorkerStepOverrideSupervisor < Jidoka::Supervisor
-    def orchestrate(arr:, notifications:, down_log:, notify_log:, raise_after: false)
-      worker_step!(TestWorker, arr: arr, notifications: notifications) do
-        down { |_worker| down_log << :custom_down }
+    def orchestrate(arr:, notifications:, down_log:, notify_log:, raise_after: false, raise_in_worker: false)
+      worker_klass = raise_in_worker ? FailingTestWorker : TestWorker
+      worker_step!(worker_klass, arr: arr, notifications: notifications) do
+        down { |worker| down_log << [:custom_down, worker] }
         notify { |_worker| notify_log << :custom_notify }
       end
 
@@ -85,5 +86,11 @@ module MockClasses
     end
 
     ERRORS = { custom_failure: 'Triggered failure after step' }.freeze
+  end
+
+  class FailingTestWorker < TestWorker
+    def up(**_opts)
+      raise 'up failed inside worker'
+    end
   end
 end

@@ -57,13 +57,15 @@ module Jidoka
 
     def worker_step!(klass, opts = {}, &block)
       step! do
-        up { klass.run!(**opts.merge(notify: false)) }
-        down(&:down) # Calls down on the worker instance returned by up
+        # Register defaults and apply caller overrides BEFORE running `up`, so
+        # that a failure inside `klass.run!` still triggers the (possibly
+        # overridden) `down` during rollback. The default `down` guards against
+        # a nil result since `up` may have raised before assigning one.
+        down { |result| result&.down }
         notify(&:notify!) unless opts[:notify] == false
-
-        # Allow the caller to override `down` and `notify` (and `up`, if desired)
-        # using the same DSL as `step!` itself.
         instance_eval(&block) if block
+
+        up { klass.run!(**opts.merge(notify: false)) }
       end
     end
 

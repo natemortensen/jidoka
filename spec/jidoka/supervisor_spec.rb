@@ -120,7 +120,7 @@ RSpec.describe MockClasses::WorkerStepOverrideSupervisor do
 
     it 'invokes the overridden down block instead of the default' do
       subject
-      expect(down_log).to eq([:custom_down])
+      expect(down_log.map(&:first)).to eq([:custom_down])
       # Default down would have popped from input_array; the override does not.
       expect(input_array).to eq(['Code has executed.'])
     end
@@ -128,6 +128,19 @@ RSpec.describe MockClasses::WorkerStepOverrideSupervisor do
     it 'does not fire notify when the supervisor fails' do
       subject
       expect(notify_log).to be_empty
+    end
+  end
+
+  context 'when the wrapped worker itself raises during up' do
+    let(:flags) { { raise_in_worker: true } }
+
+    it { is_expected.to be_failure }
+
+    it 'still invokes the overridden down block (registered before up)' do
+      subject
+      expect(down_log.map(&:first)).to eq([:custom_down])
+      # The worker's `up` raised before returning, so the block receives nil.
+      expect(down_log.first.last).to be_nil
     end
   end
 end
