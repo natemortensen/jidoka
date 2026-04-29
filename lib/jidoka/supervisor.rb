@@ -1,7 +1,7 @@
 require_relative "supervisor/step"
 
 module Jidoka
-  class Supervisor < Commander
+  class Supervisor < Worker
     def initialize(*args)
       super(*args)
       @steps = []
@@ -55,11 +55,15 @@ module Jidoka
       step.result
     end
 
-    def worker_step!(klass, opts = {})
+    def worker_step!(klass, opts = {}, &block)
       step! do
         up { klass.run!(**opts.merge(notify: false)) }
         down(&:down) # Calls down on the worker instance returned by up
         notify(&:notify!) unless opts[:notify] == false
+
+        # Allow the caller to override `down` and `notify` (and `up`, if desired)
+        # using the same DSL as `step!` itself.
+        instance_eval(&block) if block
       end
     end
 

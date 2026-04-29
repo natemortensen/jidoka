@@ -1,5 +1,5 @@
 module Jidoka
-  class Commander < Jidoka.configuration.parent_job_class.constantize
+  class Worker < Jidoka.configuration.parent_job_class.constantize
     include ActiveSupport::Rescuable
 
     # @return [String] Error message to display to end users
@@ -7,7 +7,7 @@ module Jidoka
 
     class_attribute :argument_types
 
-    # Shared error messages available to all Commanders
+    # Shared error messages available to all Workers
     BASE_ERRORS = {
       invalid_state_transition: 'You cannot transition to this state',
       action_already_performed: 'This action has already been performed'
@@ -33,6 +33,16 @@ module Jidoka
 
     def self.run(opts = {})
       initialize_and_call!(opts, :validate, :run, *include_notify?(opts)).tap do |result|
+        yield(result) if block_given?
+      end
+    end
+
+    def self.run_without_transaction!(opts = {})
+      initialize_and_call!(opts, :validate!, :run_without_transaction!, *include_notify?(opts))
+    end
+
+    def self.run_without_transaction(opts = {})
+      initialize_and_call!(opts, :validate, :run_without_transaction, *include_notify?(opts)).tap do |result|
         yield(result) if block_given?
       end
     end
@@ -110,6 +120,23 @@ module Jidoka
 
     def run
       run!
+    rescue StandardError => e
+      notice_failure!(e)
+    end
+
+    # Runs `up` without wrapping it in an ActiveRecord transaction.
+    # Use when the work spans non-transactional resources (external APIs,
+    # background jobs, long-running processes) where holding a DB transaction
+    # would be inappropriate.
+    def run_without_transaction!
+      up(**@opts)
+    rescue Jidoka::ConditionNotMet, Jidoka::Failure => e
+      notice_failure!(e)
+      raise(e)
+    end
+
+    def run_without_transaction
+      run_without_transaction!
     rescue StandardError => e
       notice_failure!(e)
     end

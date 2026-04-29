@@ -3,7 +3,7 @@
 require 'jidoka'
 
 module MockClasses
-  class TestWorker < Jidoka::Commander
+  class TestWorker < Jidoka::Worker
     attr_reader :arr
 
     ERRORS = {
@@ -65,5 +65,18 @@ module MockClasses
     def validate_conditions!(arr:, **_opts)
       condition!(:array_not_blank) { arr.empty? }
     end
+  end
+
+  class WorkerStepOverrideSupervisor < Jidoka::Supervisor
+    def orchestrate(arr:, notifications:, down_log:, notify_log:, raise_after: false)
+      worker_step!(TestWorker, arr: arr, notifications: notifications) do
+        down { |_worker| down_log << :custom_down }
+        notify { |_worker| notify_log << :custom_notify }
+      end
+
+      fail!(:custom_failure) if raise_after
+    end
+
+    ERRORS = { custom_failure: 'Triggered failure after step' }.freeze
   end
 end

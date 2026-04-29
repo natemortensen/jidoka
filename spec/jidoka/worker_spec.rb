@@ -108,6 +108,44 @@ RSpec.describe MockClasses::TestWorker do
     end
   end
 
+  describe 'run_without_transaction!' do
+    subject { described_class.run_without_transaction!(args) }
+
+    it 'does not open an ActiveRecord transaction' do
+      expect(ActiveRecord::Base).not_to receive(:transaction)
+      subject
+    end
+
+    it { is_expected.to be_an_instance_of(described_class) }
+    it { expect { subject }.to change(arr, :size).by(1) }
+    it { expect { subject }.to change(notifications, :size).by(1) }
+
+    context 'with invalid args' do
+      let(:arr) { %i[one two] }
+
+      it { expect { subject }.to raise_error(Jidoka::ConditionNotMet) }
+    end
+  end
+
+  describe 'run_without_transaction' do
+    subject { described_class.run_without_transaction(args) }
+
+    it 'does not open an ActiveRecord transaction' do
+      expect(ActiveRecord::Base).not_to receive(:transaction)
+      subject
+    end
+
+    it { is_expected.to be_an_instance_of(described_class) }
+    it { expect { subject }.to change(arr, :size).by(1) }
+
+    context 'with invalid args' do
+      let(:arr) { %i[one two] }
+
+      it { expect { subject }.not_to raise_error }
+      it { is_expected.to be_failure }
+    end
+  end
+
   describe 'dry_run' do
     subject { described_class.dry_run(args) }
 

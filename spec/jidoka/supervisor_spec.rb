@@ -79,3 +79,55 @@ RSpec.describe MockClasses::TestSupervisor do
     end
   end
 end
+
+RSpec.describe MockClasses::WorkerStepOverrideSupervisor do
+  let!(:input_array) { [] }
+  let!(:notification_queue) { [] }
+  let!(:down_log) { [] }
+  let!(:notify_log) { [] }
+  let(:flags) { {} }
+
+  subject do
+    described_class.run(
+      flags.merge(
+        arr: input_array,
+        notifications: notification_queue,
+        down_log: down_log,
+        notify_log: notify_log
+      )
+    )
+  end
+
+  context 'on success' do
+    it { is_expected.to be_success }
+
+    it 'invokes the overridden notify block instead of the default' do
+      subject
+      expect(notify_log).to eq([:custom_notify])
+      expect(notification_queue).to be_empty
+    end
+
+    it 'does not invoke the down block when no rollback occurs' do
+      subject
+      expect(down_log).to be_empty
+    end
+  end
+
+  context 'when a later failure triggers rollback' do
+    let(:flags) { { raise_after: true } }
+
+    it { is_expected.to be_failure }
+
+    it 'invokes the overridden down block instead of the default' do
+      subject
+      expect(down_log).to eq([:custom_down])
+      # Default down would have popped from input_array; the override does not.
+      expect(input_array).to eq(['Code has executed.'])
+    end
+
+    it 'does not fire notify when the supervisor fails' do
+      subject
+      expect(notify_log).to be_empty
+    end
+  end
+end
